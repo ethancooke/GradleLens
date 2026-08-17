@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "swift build*": "allow",
+      "swift test*": "allow",
+      "swift run*": "allow",
+      "swift package describe*": "allow",
+      "swift package show-dependencies*": "allow",
+      "swift format*": "allow",
+      "Scripts/verify.sh*": "allow",
+      "Scripts/format.sh*": "allow",
+      "Scripts/check-updates.sh*": "allow",
+      "Scripts/add-permission.sh*": "allow",
+      "Scripts/test-rename.sh*": "allow",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "git show*": "allow",
+      "git branch*": "allow",
+      "xed*": "allow"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(swift build:*)",
+      "Bash(swift test:*)",
+      "Bash(swift run:*)",
+      "Bash(swift package describe:*)",
+      "Bash(swift package show-dependencies:*)",
+      "Bash(swift format:*)",
+      "Bash(Scripts/verify.sh:*)",
+      "Bash(Scripts/format.sh:*)",
+      "Bash(Scripts/check-updates.sh:*)",
+      "Bash(Scripts/add-permission.sh:*)",
+      "Bash(Scripts/test-rename.sh:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(xed:*)"
+    ]
+  }
+}

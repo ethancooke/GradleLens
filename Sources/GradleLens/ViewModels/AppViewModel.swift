@@ -1,0 +1,292 @@
+import Foundation
+import GradleLensCore
+
+@MainActor
+@Observable
+final class AppViewModel {
+    private static let lastProjectKey = "GradleLens.lastProjectPath"
+
+    var projects: [GradleProject] = []
+    var selectedProjectID: String?
+    var builds: [BuildRecord] = []
+    var selectedBuildID: UUID?
+    var selectedDetail: BuildDetail?
+    var cacheOverview: BuildCacheOverview?
+    var gitContext: GitContext?
+    var projectStructure: ProjectStructure?
+    var searchText = ""
+    var outcomeFilter: BuildOutcome?
+    var taskSearch = ""
+    var isLoading = false
+    var isIndexing = false
+    var statusMessage: String?
+    var errorMessage: String?
+    var inspectorVisible = true
+    var projectMissingFromDisk = false
+
+    private var store: BuildHistoryStore?
+    private let discovery: ProjectDiscoveryService
+    private let indexer: BuildIndexer
+    private let cacheInspector: BuildCacheInspector
+    private let git: GitService
+    private let structureReader: ProjectStructureReader
+    private let autoImportIDERecents: Bool
+    private let defaults: UserDefaults
+
+    init(
+        store: BuildHistoryStore? = nil,
+        discovery: ProjectDiscoveryService = ProjectDiscoveryService(),
+        indexer: BuildIndexer = BuildIndexer(),
+        cacheInspector: BuildCacheInspector = BuildCacheInspector(),
+        git: GitService = GitService(),
+        structureReader: ProjectStructureReader = ProjectStructureReader(),
+        autoImportIDERecents: Bool = true,
+        defaults: UserDefaults = .standard
+    ) {
+        self.store = store
+        self.discovery = discovery
+        self.indexer = indexer
+        self.cacheInspector = cacheInspector
+        self.git = git
+        self.structureReader = structureReader
+        self.autoImportIDERecents = autoImportIDERecents
+        self.defaults = defaults
+    }
+
+    var selectedProject: GradleProject? {
+        projects.first { $0.id == selectedProjectID }
+    }
+
+    var selectedBuild: BuildRecord? {
+        builds.first { $0.id == selectedBuildID }
+    }
+
+    var filteredBuilds: [BuildRecord] {
+        builds.filter { record in
+            if let outcomeFilter, record.outcome != outcomeFilter { return false }
+            let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !query.isEmpty else { return true }
+            return record.requestedTasksLabel.localizedCaseInsensitiveContains(query)
+                || record.outcome.displayName.localizedCaseInsensitiveContains(query)
+                || (record.gradleVersion?.localizedCaseInsensitiveContains(query) ?? false)
+                || (record.profilePath?.localizedCaseInsensitiveContains(query) ?? false)
+        }
+    }
+
+    func bootstrap() async {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            if store == nil {
+                store = try BuildHistoryStore.applicationDefault()
+            }
+            async let cache = cacheInspector.overview()
+            var loaded = try await requireStore().allProjects()
+            if loaded.isEmpty && autoImportIDERecents {
+                let recents = await discovery.importIDERecents()
+                for project in recents {
+                    try await requireStore().upsertProject(project)
+                }
+                loaded = try await requireStore().allProjects()
+                if !recents.isEmpty {
+                    statusMessage = "Imported \(recents.count) Gradle project\(recents.count == 1 ? "" : "s") from Android Studio / IntelliJ recents."
+                }
+            }
+            projects = loaded
+            cacheOverview = await cache
+
+            if let last = defaults.string(forKey: Self.lastProjectKey),
+               projects.contains(where: { $0.id == last })
+            {
+                await selectProject(last)
+            } else if let first = projects.first {
+                await selectProject(first.id)
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func openProject(at url: URL) async {
+        do {
+            let project = try await discovery.project(at: url, source: .manual)
+            try await requireStore().upsertProject(project)
+            try await reloadProjects()
+            await selectProject(project.id)
+            statusMessage = "Opened \(project.name)"
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func scanFolder(at url: URL) async {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            let found = await discovery.scan(folder: url)
+            for project in found {
+                if let existing = try await requireStore().project(id: project.id) {
+                    try await requireStore().upsertProject(
+                        GradleProject(
+                            rootPath: existing.rootPath,
+                            name: project.name,
+                            lastOpenedAt: existing.lastOpenedAt,
+                            lastIndexedAt: existing.lastIndexedAt,
+                            source: existing.source
+                        )
+                    )
+                } else {
+                    try await requireStore().upsertProject(project)
+                }
+            }
+            try await reloadProjects()
+            if let first = found.first, selectedProjectID == nil {
+                await selectProject(first.id)
+            }
+            statusMessage = found.isEmpty
+                ? "No Gradle projects found in that folder."
+                : "Found \(found.count) Gradle project\(found.count == 1 ? "" : "s")."
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func selectProject(_ id: String?) async {
+        selectedProjectID = id
+        selectedBuildID = nil
+        selectedDetail = nil
+        builds = []
+        gitContext = nil
+        projectStructure = nil
+        projectMissingFromDisk = false
+        taskSearch = ""
+
+        guard let id else { return }
+        defaults.set(id, forKey: Self.lastProjectKey)
+
+        do {
+            guard var project = try await requireStore().project(id: id) else { return }
+            projectMissingFromDisk = !FileManager.default.fileExists(atPath: project.rootPath)
+            project = project.touchingOpened()
+            try await requireStore().upsertProject(project)
+            try await reloadProjects()
+
+            if !projectMissingFromDisk {
+                projectStructure = try? structureReader.read(projectRoot: project.rootURL)
+                async let gitLoad = git.context(for: project.rootURL)
+                await indexSelectedProject()
+                gitContext = await gitLoad
+            }
+
+            builds = try await requireStore().builds(forProjectID: id)
+            if let first = filteredBuilds.first {
+                await selectBuild(first.id)
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func selectBuild(_ id: UUID?) async {
+        selectedBuildID = id
+        taskSearch = ""
+        guard let id, let record = builds.first(where: { $0.id == id }) else {
+            selectedDetail = nil
+            return
+        }
+        selectedDetail = await indexer.loadDetail(for: record)
+    }
+
+    func refresh() async {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            cacheOverview = await cacheInspector.overview()
+            if let id = selectedProjectID {
+                await selectProject(id)
+            } else {
+                try await reloadProjects()
+            }
+            statusMessage = "Refreshed"
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func refreshCache() async {
+        cacheOverview = await cacheInspector.overview()
+    }
+
+    func importIDERecents() async {
+        do {
+            let recents = await discovery.importIDERecents()
+            for project in recents {
+                if try await requireStore().project(id: project.id) == nil {
+                    try await requireStore().upsertProject(project)
+                }
+            }
+            try await reloadProjects()
+            statusMessage = recents.isEmpty
+                ? "No Gradle projects found in IDE recents."
+                : "Imported IDE recents (\(recents.count))."
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func removeProject(_ id: String) async {
+        do {
+            try await requireStore().removeProject(id: id)
+            if selectedProjectID == id {
+                selectedProjectID = nil
+                selectedBuildID = nil
+                selectedDetail = nil
+                builds = []
+                gitContext = nil
+                projectStructure = nil
+            }
+            try await reloadProjects()
+            if selectedProjectID == nil, let first = projects.first {
+                await selectProject(first.id)
+            }
+            statusMessage = "Removed from GradleLens (files were not deleted)."
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func dismissError() {
+        errorMessage = nil
+    }
+
+    private func indexSelectedProject() async {
+        guard let project = selectedProject else { return }
+        isIndexing = true
+        defer { isIndexing = false }
+        do {
+            let (result, structure) = try await indexer.index(
+                project: project,
+                store: requireStore(),
+                structure: projectStructure
+            )
+            projectStructure = structure
+            if result.imported > 0 {
+                statusMessage = "Indexed \(result.imported) new profile report\(result.imported == 1 ? "" : "s")."
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func reloadProjects() async throws {
+        projects = try await requireStore().allProjects()
+    }
+
+    @discardableResult
+    private func requireStore() throws -> BuildHistoryStore {
+        guard let store else {
+            throw GradleLensError.database("History store is not ready.")
+        }
+        return store
+    }
+}

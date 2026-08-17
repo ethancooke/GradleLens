@@ -1,0 +1,31 @@
+name: Rebrand smoke test
+
+# The template's core promise: a fresh clone, rebranded + finalized + stripped of scaffolding,
+# still builds and tests. This whole workflow is finalize-only scaffolding —
+# Scripts/strip-scaffolding.sh deletes the file, so finalized apps don't inherit a broken job.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: rebrand-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rebrand-smoke:
+    name: Rebrand smoke test (rename + finalize + strip build clean)
+    runs-on: macos-26
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Rebrand a throwaway copy and build it
+        run: |
+          set -o pipefail
+          Scripts/test-rename.sh

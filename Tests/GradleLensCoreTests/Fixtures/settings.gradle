@@ -1,0 +1,6 @@
+rootProject.name = 'legacy-app'
+
+include 'app'
+include 'lib', 'data'
+include ':feature:home'
+includeBuild 'build-logic'

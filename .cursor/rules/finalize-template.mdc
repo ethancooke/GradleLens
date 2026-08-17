@@ -1,0 +1,30 @@
+---
+description: Rebrand and finalize a freshly cloned AppleFactory macOS app template into a new app. Asks for app name, bundle ID, description, category, distribution, and permissions, then runs Scripts/rename.sh + Scripts/finalize.sh and makes targeted edits. See docs/FINALIZE.md for the full workflow.
+globs:
+  - "*"
+alwaysApply: false
+---
+
+# Finalize a freshly cloned AppleFactory template
+
+If this is a freshly cloned AppleFactory template (signals: `Scripts/rename.sh` exists **and**
+`Sources/AppTemplate/` still exists, or `Resources/Info.plist` still contains
+`com.example.AppTemplate`), follow the canonical workflow in
+**[`docs/FINALIZE.md`](docs/FINALIZE.md)** to rebrand it into a real app.
+
+Summary of the workflow (full details, question options, and tables in `docs/FINALIZE.md`):
+
+1. **Ask** the user: app name, bundle ID prefix, one-line description, App Store category,
+   distribution (Direct vs App Store), permissions needed, copyright holder, GitHub `owner/repo`,
+   and whether to keep the sample code.
+2. **Run** `Scripts/rename.sh "<App name>" "<Bundle ID prefix>"` then
+   `Scripts/finalize.sh --app "<App name>" --repo "<owner/repo>" --category "<category>"
+   [--copyright "<holder>"] [--distribution direct|appstore]`.
+3. **Edit** the README description, AGENTS.md project summary, `Resources/Info.plist`
+   (`NS*UsageDescription` keys), `Resources/Entitlements.plist` (matching entitlements, no XML
+   comments), and PRIVACY/SECURITY as needed.
+4. **Verify** with `swift build && swift test`.
+5. **Hand off**: suggest `git add -A && git commit`.
+
+Do not run this if `Sources/AppTemplate/` has already been renamed away — the template is already
+finalized.

@@ -1,0 +1,23 @@
+GradleLens
+Copyright 2026 Ethan Cooke
+
+This product is licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this product except in compliance with the License. A copy of the License is in the LICENSE file
+and at http://www.apache.org/licenses/LICENSE-2.0.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, express or implied (see Apache
+License sections 7-8).
+
+----------------------------------------------------------------------
+Third-party code
+----------------------------------------------------------------------
+
+GradleLens bundles no third-party source or binary dependencies. It links only against Apple
+system frameworks (Foundation, SwiftUI, AppKit) and the system SQLite library (`libsqlite3`).
+When you add dependencies, list them here with their licenses and attribution.
+
+----------------------------------------------------------------------
+Acknowledgements
+----------------------------------------------------------------------
+
+This project was scaffolded from the AppleFactory macOS app template.
