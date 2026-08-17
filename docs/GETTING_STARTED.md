@@ -1,6 +1,6 @@
 # Getting started
 
-A fast walkthrough from clone to a running GradleLens window.
+A fast walkthrough for building and running **GradleLens**.
 
 ## Requirements
 
@@ -11,11 +11,9 @@ A fast walkthrough from clone to a running GradleLens window.
 ## 1. Build & run
 
 ```bash
-git clone https://github.com/ethancooke/GradleLens.git
-cd GradleLens
-swift build
-swift test
-swift run GradleLens
+swift build          # build all targets (debug)
+swift test           # run the unit tests
+swift run GradleLens # launch the GUI
 ```
 
 Open in Xcode:
@@ -24,10 +22,9 @@ Open in Xcode:
 xed .
 ```
 
-> **Note:** `swift run` launches the SwiftUI app as a bare executable (not a `.app`
-> bundle). The `AppDelegate` sets a regular activation policy so the window comes
-> to the front. To produce a real, signed, distributable `.app`, use the release
-> script below.
+> **Note:** `swift run` launches the SwiftUI app as a bare executable (not a `.app` bundle). The
+> `AppDelegate` sets a regular activation policy so the window comes to the front. To produce a
+> real, signed, distributable `.app`, use the release script below.
 
 ## 2. Use it
 
@@ -49,17 +46,14 @@ cd /path/to/project
 
 Then click **Refresh** in GradleLens (⌘R).
 
-## 3. Where things live
+History is stored at `~/Library/Application Support/GradleLens/history.sqlite`.
+Removing a project from the sidebar deletes only the index entry, not the project
+on disk.
 
-- Domain logic: `Sources/GradleLensCore/`
-- SwiftUI: `Sources/GradleLens/`
-- Tests: `Tests/GradleLensCoreTests/` and `Tests/GradleLensTests/`
-- Local index: `~/Library/Application Support/GradleLens/history.sqlite`
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the layering rules and [`AGENTS.md`](../AGENTS.md) for
+the conventions (Swift 6 strict concurrency, `@Observable`, no comments in source).
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the layering rules and
-[`../AGENTS.md`](../AGENTS.md) for conventions.
-
-## 4. Release
+## 3. Release
 
 ```bash
 # ad-hoc (local testing only — Gatekeeper blocks it elsewhere):
@@ -71,5 +65,5 @@ NOTARY_KEYCHAIN_PROFILE="gradlelens-notary" \
 bash Scripts/release.sh
 ```
 
-Artifacts land in `dist/` (`GradleLens-<version>.dmg` + `.zip` + checksums). For
-CI release setup see [`RELEASING.md`](RELEASING.md).
+Artifacts land in `dist/` (`GradleLens-<version>.dmg` + `.zip` + checksums). For CI release setup and
+the full signing/notarization guide, see [`RELEASING.md`](RELEASING.md).

@@ -1,4 +1,4 @@
-# Maintaining the template
+# Maintaining GradleLens
 
 How to keep GradleLens current — latest toolchain, CI, dependencies, and Apple guidance.
 
@@ -47,7 +47,7 @@ notes — skim the action's release notes before merging.
   need, and update `LSMinimumSystemVersion` in `Resources/Info.plist` and the README badge to match.
 - **Deprecations.** Fix each one the audit/build reports by moving to Apple's recommended
   replacement (e.g. an AppKit call deprecated in a new SDK). Keep the build warning-free.
-- **Apple guidance drift.** Periodically confirm the template still reflects current best practice:
+- **Apple guidance drift.** Periodically confirm the project still reflects current best practice:
   the `@Observable` macro over `ObservableObject`, Swift Testing over XCTest, and any changes to
   **notarization / hardened-runtime / signing** requirements (`notarytool`, entitlements, App
   Sandbox rules) that affect `Scripts/release.sh` and `docs/RELEASING.md`. Sources: Apple developer

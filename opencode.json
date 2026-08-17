@@ -13,7 +13,6 @@
       "Scripts/format.sh*": "allow",
       "Scripts/check-updates.sh*": "allow",
       "Scripts/add-permission.sh*": "allow",
-      "Scripts/test-rename.sh*": "allow",
       "git status*": "allow",
       "git diff*": "allow",
       "git log*": "allow",

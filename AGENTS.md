@@ -1,15 +1,5 @@
 # AGENTS.md — guidance for AI coding agents (opencode, etc.)
 
-## Fresh-clone finalization (do this first)
-
-If this repo is still in its un-rebranded template state — `Scripts/rename.sh` and
-`Scripts/finalize.sh` both exist and haven't been cleaned up yet — follow
-[`docs/FINALIZE.md`](docs/FINALIZE.md) to rebrand it into a real app before any other work. The
-workflow asks a few questions (app name, bundle ID, description, category, distribution,
-permissions), runs `Scripts/rename.sh` + `Scripts/finalize.sh`, makes the targeted edits the scripts
-can't, and verifies with `swift build && swift test`. If the finalization scripts are gone, the
-template is already finalized — skip this.
-
 ## Project
 
 GradleLens is a **local-only macOS developer tool** (Apple Silicon, macOS 14+) that inspects
@@ -27,9 +17,6 @@ strict concurrency. SwiftUI-first. Swift Package Manager layout. No network, no 
 - Verify (build + release build + test, quiet): `Scripts/verify.sh` (`--quick` skips the release build)
 - Maintenance audit (deprecations, stale CI/actions, toolchain drift): `Scripts/check-updates.sh` (see [`docs/MAINTAINING.md`](docs/MAINTAINING.md))
 - Add a permission (Info.plist + entitlement, from a baked-in table): `Scripts/add-permission.sh <permission> "<reason>"` (`--list` shows slugs)
-- One-command bootstrap (rebrand + verify + fresh git + push): `Scripts/setup.sh` (see [`INSTRUCTIONS.md`](INSTRUCTIONS.md))
-- Rebrand the template: `Scripts/rename.sh "MyApp" "com.myapp"`
-- Smoke-test the rebrand (rename + finalize + strip in a temp copy, assert no dangling refs): `Scripts/test-rename.sh`
 - Format Swift (optional, not a gate): `Scripts/format.sh` (`--lint` to check only)
 - Ad-hoc release build: `bash Scripts/release.sh`
 
@@ -42,7 +29,7 @@ before finishing a task.
 
 - **Swift 6 strict concurrency**: prefer `actor` for mutable state; make model types `Sendable`
   structs/enums. No global mutable state. The app target defaults to `@MainActor` isolation
-  (Xcode 26 / Swift 6.2 Approachable Concurrency); `GradleLensCore` stays nonisolated.
+  (Xcode 26 / Swift 6.2); `GradleLensCore` stays nonisolated.
 - **UI uses the `@Observable` macro** (macOS 14+) — not `ObservableObject`/`@Published`.
 - **No comments in source unless they explain non-obvious *why*.** No emoji in source.
 - **Keep the core UI-agnostic**: `GradleLensCore` must not import `SwiftUI`/`AppKit`. UI lives only
@@ -62,11 +49,9 @@ before finishing a task.
 - `Tests/GradleLensCoreTests` — Swift Testing suites for the core library.
 - `Tests/GradleLensTests` — Swift Testing suites for the app target (e.g. the `@MainActor` view model).
 - `Resources/` — `Info.plist`, `Entitlements.plist`, app icon for the hand-assembled `.app`.
-- `Scripts/` — `setup.sh` (one-command bootstrap), `rename.sh` (rebrand the template), `finalize.sh` (post-rename repo URL/category/
-  copyright/sandbox), `strip-scaffolding.sh` (finalize cleanup: slim CLAUDE/AGENTS/README, remove scaffolding),
-  `add-permission.sh` (Info.plist + entitlement from a table), `verify.sh`
-  (quiet build+test gate), `test-rename.sh` (rebrand smoke test), `format.sh` (optional Swift
-  formatting), `check-updates.sh` (maintenance audit), and `release.sh` (distributable build).
+- `Scripts/` — `add-permission.sh` (Info.plist + entitlement from a table), `verify.sh`
+  (quiet build+test gate), `format.sh` (optional Swift formatting), `check-updates.sh`
+  (maintenance audit), and `release.sh` (distributable build).
 - `docs/` — architecture, development (recipes), releasing, getting started, maintaining, principles (design compass).
 
 ## Distribution

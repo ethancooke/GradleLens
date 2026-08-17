@@ -3,7 +3,7 @@
 # Add a macOS permission to the app: writes the NS*UsageDescription into Resources/Info.plist
 # and the matching entitlement into Resources/Entitlements.plist, deterministically.
 #
-# The permission -> plist-key mapping is the table from docs/FINALIZE.md, baked in here so an
+# The permission -> plist-key mapping is the baked in here so an
 # AI (or a human) never has to re-derive it, and so Entitlements.plist stays comment-free
 # (codesign's entitlements parser rejects XML comments).
 #

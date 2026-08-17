@@ -17,12 +17,8 @@ GradleLens is for individual developer machines and large monorepos. It reads ar
 - **Local build history** — indexed from `build/reports/profile/profile-*.html` (`gradle --profile`)
 - **Build detail** — phase breakdown, slowest-task timeline, searchable task table
 - **Local build cache** — size, entry count, newest/oldest, largest blobs in `~/.gradle/caches/build-cache-1`
-- **Project structure** — modules and included builds from `settings.gradle` / `settings.gradle.kts`, plus inferred tasks from build files
+- **Project structure** — modules and included builds from `settings.gradle` / `settings.gradle.kts`
 - **Git context** — current branch, dirty status, recent commits (local `git` only; never fetch/push)
-
-### Out of scope (v1)
-
-No network access, no remote build cache, no CI visibility, no Develocity / Build Scan upload, no AI features, no multi-build-system support.
 
 To capture richer builds, run Gradle with `--profile`:
 
@@ -34,19 +30,23 @@ Reports land in `build/reports/profile/`. GradleLens never invokes the Gradle wr
 
 ---
 
-## Run it
+## Building from source
 
 Requires an Apple Silicon Mac, macOS 14+, and Xcode 26+ (Swift 6.2 toolchain).
 
 ```bash
-swift build
-swift test
-swift run GradleLens
+swift build            # debug
+swift build -c release # release
+swift test             # unit tests
+swift run GradleLens   # launch the GUI (CLI-built; not a .app bundle)
+xed .                  # open in Xcode
 ```
 
-Open in Xcode with `xed .`.
+To produce a distributable, signed, notarized `.app`/`.dmg`, run
+[`Scripts/release.sh`](Scripts/release.sh) — see [`docs/RELEASING.md`](docs/RELEASING.md).
 
-`swift run` launches the SwiftUI app as a bare executable. The app delegate sets a regular activation policy so the window comes forward. For a signed `.app` / `.dmg`, use [`Scripts/release.sh`](Scripts/release.sh) — see [`docs/RELEASING.md`](docs/RELEASING.md).
+See [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) for a fuller walkthrough and
+[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for feature recipes.
 
 ---
 
@@ -58,53 +58,6 @@ Open in Xcode with `xed .`.
 - Uses the system SQLite library (no third-party packages)
 
 See [`PRIVACY.md`](PRIVACY.md).
-
----
-
-## Architecture
-
-Two SwiftPM targets, following the AppleFactory conventions:
-
-| Target | Role |
-|---|---|
-| **GradleLensCore** | Models, parsers, Gradle/cache/git inspection, SQLite persistence. No SwiftUI/AppKit. |
-| **GradleLens** | SwiftUI views, `@Observable` view models, AppKit file panels. |
-
-Details: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Design compass: [`docs/PRINCIPLES.md`](docs/PRINCIPLES.md).
-
----
-
-## Repository layout
-
-```
-GradleLens/
-├── Package.swift
-├── README.md  PRIVACY.md  SECURITY.md  CONTRIBUTING.md  AGENTS.md
-├── LICENSE  NOTICE
-├── Resources/                   # Info.plist, entitlements, app icon
-├── Scripts/                     # verify, release (sign+notarize), format, …
-├── Sources/
-│   ├── GradleLens/              # @main SwiftUI app
-│   └── GradleLensCore/          # UI-agnostic domain library
-├── Tests/
-│   ├── GradleLensCoreTests/
-│   └── GradleLensTests/
-└── docs/                        # architecture, development, releasing
-```
-
-The sign + notarize pipeline, CI (`.github/workflows/`), and community files come from the [AppleFactory](https://github.com/ethancooke/AppleFactory) template and are kept intact.
-
----
-
-## Building from source
-
-```bash
-swift build            # debug
-swift build -c release # release
-swift test             # unit tests
-swift run GradleLens   # launch the GUI
-Scripts/verify.sh      # debug + release + tests (quiet)
-```
 
 ---
 
