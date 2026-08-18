@@ -33,6 +33,9 @@ cd "$ROOT"
 APP_NAME="GradleLens"
 EXECUTABLE="GradleLens"
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"
+if [[ -z "$SIGN_IDENTITY" ]]; then
+    SIGN_IDENTITY="-"
+fi
 DIST="$ROOT/dist"
 APP="$DIST/$APP_NAME.app"
 ENTITLEMENTS="$ROOT/Resources/Entitlements.plist"

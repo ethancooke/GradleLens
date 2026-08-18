@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "source": "gradlelens-init",
+  "startedAt": "2026-08-17T09:30:45-04:00",
+  "finishedAt": "2026-08-17T09:30:57-04:00",
+  "durationSeconds": 12.345,
+  "outcome": "failed",
+  "requestedTasks": ["assemble", "test"],
+  "excludedTasks": ["lint"],
+  "gradleVersion": "9.7.0",
+  "rootDir": "/tmp/demo",
+  "configurationCacheRequested": true,
+  "git": {
+    "branch": "main",
+    "commit": "abcdef0123456789",
+    "dirty": true
+  },
+  "phases": {
+    "total": 12.345,
+    "taskExecution": 10.0
+  },
+  "tasks": [
+    {
+      "path": ":app:compileKotlin",
+      "durationSeconds": 4.5,
+      "startOffsetSeconds": 2.0,
+      "result": "executed"
+    },
+    {
+      "path": ":app:compileDebugKotlin",
+      "durationSeconds": 3.2,
+      "startOffsetSeconds": 2.1,
+      "result": "fromCache"
+    },
+    {
+      "path": ":app:test",
+      "durationSeconds": 0.7,
+      "startOffsetSeconds": 11.0,
+      "result": "failed",
+      "skipMessage": null
+    }
+  ]
+}

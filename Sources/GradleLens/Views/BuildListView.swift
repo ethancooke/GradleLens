@@ -26,9 +26,9 @@ struct BuildListView: View {
             } else if viewModel.filteredBuilds.isEmpty {
                 EmptyStateView(
                     systemImage: "chart.bar.doc.horizontal",
-                    title: "No local profile reports",
+                    title: "No local builds yet",
                     message: """
-                    GradleLens reads existing --profile HTML reports from build/reports/profile.
+                    GradleLens reads --profile HTML and GradleLens scan JSON.
 
                     ./gradlew --profile <tasks>
                     """
@@ -36,8 +36,24 @@ struct BuildListView: View {
             } else {
                 List(selection: buildSelection) {
                     ForEach(viewModel.filteredBuilds) { build in
-                        BuildRow(build: build)
-                            .tag(build.id)
+                        BuildRow(
+                            build: build,
+                            role: compareRole(for: build.id)
+                        )
+                        .tag(build.id)
+                        .contextMenu {
+                            Button("Compare with another build") {
+                                Task { await viewModel.markForCompare(build.id) }
+                            }
+                            if viewModel.selectedBuildID == build.id {
+                                Button("Compare with previous") {
+                                    Task { await viewModel.compareWithPrevious() }
+                                }
+                            }
+                            Button("Trends for this command") {
+                                viewModel.showTrends(for: build.commandKey)
+                            }
+                        }
                     }
                 }
             }
@@ -46,6 +62,25 @@ struct BuildListView: View {
         .navigationSubtitle(subtitle)
         .searchable(text: $viewModel.searchText, prompt: "Filter builds")
         .toolbar {
+            ToolbarItem(placement: .automatic) {
+                Button("Trends") {
+                    viewModel.showTrends()
+                }
+                .help("Chart this command over a date range")
+                .disabled(viewModel.builds.isEmpty)
+            }
+            ToolbarItem(placement: .automatic) {
+                if viewModel.comparison != nil {
+                    Button("Clear compare") {
+                        viewModel.clearComparison()
+                    }
+                } else if viewModel.selectedBuildID != nil {
+                    Button("Compare") {
+                        Task { await viewModel.compareWithPrevious() }
+                    }
+                    .help("Compare the selected build with the next older one")
+                }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Picker("Outcome", selection: $viewModel.outcomeFilter) {
                     Text("All").tag(Optional<BuildOutcome>.none)
@@ -73,6 +108,12 @@ struct BuildListView: View {
         return "\(count) local build\(count == 1 ? "" : "s")"
     }
 
+    private func compareRole(for id: UUID) -> String? {
+        if viewModel.compareBaselineID == id { return "A" }
+        if viewModel.compareCandidateID == id { return "B" }
+        return nil
+    }
+
     private var buildSelection: Binding<UUID?> {
         Binding(
             get: { viewModel.selectedBuildID },
@@ -85,10 +126,18 @@ struct BuildListView: View {
 
 private struct BuildRow: View {
     let build: BuildRecord
+    var role: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
+                if let role {
+                    Text(role)
+                        .font(.caption.weight(.bold))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.accentColor.opacity(0.18), in: Capsule())
+                }
                 Text(build.requestedTasksLabel)
                     .font(.body.weight(.medium))
                     .lineLimit(1)
@@ -99,6 +148,11 @@ private struct BuildRow: View {
             }
             HStack(spacing: 8) {
                 StatusBadge(outcome: build.outcome)
+                if build.hasLocalScan {
+                    Text("Scan")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.teal)
+                }
                 Text(build.startedAt.formatted(date: .abbreviated, time: .shortened))
                     .font(.caption)
                     .foregroundStyle(.secondary)

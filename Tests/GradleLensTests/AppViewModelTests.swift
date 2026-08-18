@@ -107,6 +107,114 @@ struct AppViewModelTests {
         await viewModel.removeProject(project.id)
         #expect(viewModel.projects.isEmpty)
     }
+
+    @Test("Compares the selected build with the previous one")
+    func compareWithPrevious() async throws {
+        let store = try BuildHistoryStore.inMemory()
+        let project = GradleProject(
+            rootPath: "/tmp/compare-demo",
+            name: "compare-demo",
+            lastOpenedAt: .now,
+            source: .manual
+        )
+        try await store.upsertProject(project)
+        try await store.upsertBuild(
+            BuildRecord(
+                projectID: project.id,
+                startedAt: Date(timeIntervalSince1970: 1),
+                duration: 10,
+                outcome: .succeeded,
+                requestedTasks: ["assemble"]
+            )
+        )
+        try await store.upsertBuild(
+            BuildRecord(
+                projectID: project.id,
+                startedAt: Date(timeIntervalSince1970: 2),
+                duration: 14,
+                outcome: .succeeded,
+                requestedTasks: ["assemble"]
+            )
+        )
+        let viewModel = AppViewModel(
+            store: store,
+            autoImportIDERecents: false,
+            defaults: UserDefaults(suiteName: "GradleLensTests-\(UUID().uuidString)")!
+        )
+        await viewModel.bootstrap()
+        await viewModel.selectProject(project.id)
+        #expect(viewModel.filteredBuilds.count == 2)
+        await viewModel.compareWithPrevious()
+        #expect(viewModel.comparison != nil)
+        #expect(abs((viewModel.comparison?.durationDelta ?? 0) - 4) < 0.000_1)
+        viewModel.clearComparison()
+        #expect(viewModel.comparison == nil)
+    }
+
+    @Test("Trends group commands and honor a custom range")
+    func trends() async throws {
+        let store = try BuildHistoryStore.inMemory()
+        let project = GradleProject(
+            rootPath: "/tmp/trend-demo",
+            name: "trend-demo",
+            lastOpenedAt: .now,
+            source: .manual
+        )
+        try await store.upsertProject(project)
+        let now = Date()
+        try await store.upsertBuild(
+            BuildRecord(
+                projectID: project.id,
+                startedAt: now.addingTimeInterval(-86_400 * 40),
+                duration: 50,
+                outcome: .succeeded,
+                requestedTasks: ["assemble"]
+            )
+        )
+        try await store.upsertBuild(
+            BuildRecord(
+                projectID: project.id,
+                startedAt: now.addingTimeInterval(-3_600),
+                duration: 12,
+                outcome: .succeeded,
+                requestedTasks: ["assemble"]
+            )
+        )
+        try await store.upsertBuild(
+            BuildRecord(
+                projectID: project.id,
+                startedAt: now.addingTimeInterval(-1_800),
+                duration: 9,
+                outcome: .failed,
+                requestedTasks: ["test"]
+            )
+        )
+        let viewModel = AppViewModel(
+            store: store,
+            autoImportIDERecents: false,
+            defaults: UserDefaults(suiteName: "GradleLensTests-\(UUID().uuidString)")!
+        )
+        await viewModel.bootstrap()
+        await viewModel.selectProject(project.id)
+        viewModel.showTrends(for: "assemble")
+        #expect(viewModel.showingTrends)
+        #expect(viewModel.commandSeries.count == 2)
+        viewModel.trendRange.preset = .month
+        #expect(viewModel.trendSnapshot?.runs.count == 1)
+        viewModel.trendRange.preset = .all
+        #expect(viewModel.trendSnapshot?.runs.count == 2)
+        #expect(viewModel.trendSnapshot?.stats.medianDuration == 31)
+    }
+}
+
+@Suite("LaunchArguments")
+struct LaunchArgumentsTests {
+    @Test("Parses --open and expands a tilde")
+    func parseOpen() {
+        let url = LaunchArguments.openFolder(from: ["GradleLens", "--open", "~/dev/GradleTestData"])
+        #expect(url?.path.hasSuffix("/dev/GradleTestData") == true)
+        #expect(LaunchArguments.openFolder(from: ["GradleLens"]) == nil)
+    }
 }
 
 private func makeTempProject(named name: String, withProfile: Bool) throws -> URL {

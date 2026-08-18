@@ -25,6 +25,7 @@ public struct BuildRecord: Sendable, Identifiable, Hashable, Codable {
     public let requestedTasks: [String]
     public let gradleVersion: String?
     public let profilePath: String?
+    public let scanPath: String?
     public let gitBranch: String?
     public let gitCommit: String?
     public let importedAt: Date
@@ -38,6 +39,7 @@ public struct BuildRecord: Sendable, Identifiable, Hashable, Codable {
         requestedTasks: [String],
         gradleVersion: String? = nil,
         profilePath: String? = nil,
+        scanPath: String? = nil,
         gitBranch: String? = nil,
         gitCommit: String? = nil,
         importedAt: Date = .now
@@ -50,6 +52,7 @@ public struct BuildRecord: Sendable, Identifiable, Hashable, Codable {
         self.requestedTasks = requestedTasks
         self.gradleVersion = gradleVersion
         self.profilePath = profilePath
+        self.scanPath = scanPath
         self.gitBranch = gitBranch
         self.gitCommit = gitCommit
         self.importedAt = importedAt
@@ -62,6 +65,12 @@ public struct BuildRecord: Sendable, Identifiable, Hashable, Codable {
     public var profileURL: URL? {
         profilePath.map { URL(fileURLWithPath: $0) }
     }
+
+    public var scanURL: URL? {
+        scanPath.map { URL(fileURLWithPath: $0) }
+    }
+
+    public var hasLocalScan: Bool { scanPath != nil }
 }
 
 public struct BuildQuery: Sendable, Equatable {
@@ -69,7 +78,7 @@ public struct BuildQuery: Sendable, Equatable {
     public var outcome: BuildOutcome?
     public var limit: Int
 
-    public init(search: String = "", outcome: BuildOutcome? = nil, limit: Int = 500) {
+    public init(search: String = "", outcome: BuildOutcome? = nil, limit: Int = 2000) {
         self.search = search
         self.outcome = outcome
         self.limit = limit

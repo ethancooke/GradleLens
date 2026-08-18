@@ -33,7 +33,7 @@ fully notarized, stapled, distributable build.
 - Notarization credentials — an **app-specific password** (appleid.apple.com ▸ Sign-In & Security
   ▸ App-Specific Passwords). Store them once as a `notarytool` keychain profile:
   ```bash
-  xcrun notarytool store-credentials apptemplate-notary \
+  xcrun notarytool store-credentials gradlelens-notary \
     --apple-id "you@example.com" --team-id "TEAMID" --password "app-specific-password"
   ```
 
@@ -44,8 +44,8 @@ fully notarized, stapled, distributable build.
 bash Scripts/release.sh
 
 # Fully signed + notarized + stapled:
-SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-NOTARY_KEYCHAIN_PROFILE="apptemplate-notary" \
+SIGN_IDENTITY="Developer ID Application: Ethan Cooke (E58B7L9UUN)" \
+NOTARY_KEYCHAIN_PROFILE="gradlelens-notary" \
 bash Scripts/release.sh
 ```
 
@@ -95,6 +95,14 @@ GitHub release with the `.dmg` / `.zip` and their checksums. Signing is **opt-in
 
 Without `SIGNING_ENABLED=true`, the workflow still runs and produces an **ad-hoc** `.dmg`/`.zip`
 (handy for smoke-testing the pipeline) — just not a distributable, notarized build.
+
+Do this in order:
+
+1. **Local ad-hoc** — `bash Scripts/release.sh` (no env vars). Confirms the `.app` / `.dmg` assemble.
+2. **Local notarized** — Developer ID in your login keychain + `notarytool store-credentials`, then
+   the `SIGN_IDENTITY` + `NOTARY_KEYCHAIN_PROFILE` command above. Confirm with `spctl` / `stapler`.
+3. **GitHub Actions** — only after (2) works. Set `SIGNING_ENABLED` and the secrets, then
+   `git tag v0.1.0 && git push origin v0.1.0`. The workflow opens a **draft** release; you publish it.
 
 ## Versioning
 

@@ -33,13 +33,16 @@ xed .
 2. **Open** a project root (a folder with `settings.gradle(.kts)` or
    `build.gradle(.kts)`), or **Scan** a parent folder.
 3. Select a project. GradleLens indexes `build/reports/profile/profile-*.html`
-   into the local SQLite history.
+   and `build/reports/gradlelens/scan-*.json` into the local SQLite history.
 4. Select a build to see phases, a slowest-task timeline, and the task table.
-5. The inspector shows git status, modules, and the local build cache.
+5. Select a build and choose **Compare** (or the context menu) to diff two local builds.
+6. Choose **Trends** to chart one command over 24 hours, 7/30/90 days, a year, all history, or a custom range.
+7. The inspector shows git status, modules, the local build cache, and capture-script install.
 
 If a project has no profile reports yet:
 
 ```bash
+Scripts/install-capture.sh    # optional, once — richer local scan JSON
 cd /path/to/project
 ./gradlew --profile <tasks>
 ```

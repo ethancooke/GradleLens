@@ -10,6 +10,7 @@ struct ProjectInspectorView: View {
                 gitSection
                 structureSection
                 cacheSection
+                captureSection
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -100,6 +101,31 @@ struct ProjectInspectorView: View {
             } else {
                 ProgressView()
                     .controlSize(.small)
+            }
+        }
+    }
+
+    private var captureSection: some View {
+        GroupBox("Local capture") {
+            VStack(alignment: .leading, spacing: 8) {
+                if let status = viewModel.captureStatus, status.installed {
+                    LabeledContent("Init script", value: status.matchesBundled ? "Installed" : "Installed (different version)")
+                    Text(PathFormat.abbreviatingHome(status.path))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                    if !status.matchesBundled {
+                        Button("Update init script") {
+                            viewModel.requestInstallCapture()
+                        }
+                    }
+                } else {
+                    Text("Install an init script so Gradle writes scan JSON (outcome, git, task start times) under build/reports/gradlelens. --profile HTML still works without it.")
+                        .foregroundStyle(.secondary)
+                    Button("Install init script…") {
+                        viewModel.requestInstallCapture()
+                    }
+                }
             }
         }
     }

@@ -2,9 +2,9 @@
 .build/
 .swiftpm/
 .swiftpm-xcode/
-# Package.resolved is intentionally NOT ignored: this template ships an app (an executable
-# product), so its resolved dependency versions are committed for reproducible builds — and
-# Dependabot's Swift updater reads the committed Package.resolved.
+# Package.resolved is intentionally NOT ignored: this is an app (an executable product), so
+# resolved dependency versions are committed for reproducible builds. Dependabot's Swift
+# updater also reads the committed Package.resolved.
 Packages/
 *.xcodeproj
 *.xcworkspace

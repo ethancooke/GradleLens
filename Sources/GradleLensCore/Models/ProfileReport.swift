@@ -94,12 +94,20 @@ public struct ProfileTask: Sendable, Hashable, Identifiable {
     public let duration: TimeInterval
     public let result: TaskResult
     public let rawResult: String
+    public let startOffset: TimeInterval?
 
-    public init(path: String, duration: TimeInterval, result: TaskResult, rawResult: String = "") {
+    public init(
+        path: String,
+        duration: TimeInterval,
+        result: TaskResult,
+        rawResult: String = "",
+        startOffset: TimeInterval? = nil
+    ) {
         self.path = path
         self.duration = duration
         self.result = result
         self.rawResult = rawResult
+        self.startOffset = startOffset
     }
 }
 
@@ -113,6 +121,8 @@ public struct ProfileReport: Sendable, Hashable {
     public let artifactTransforms: [NamedDuration]
     public let projectTotals: [NamedDuration]
     public let tasks: [ProfileTask]
+    public let declaredOutcome: BuildOutcome?
+    public let hasStartOffsets: Bool
 
     public init(
         sourcePath: String,
@@ -123,7 +133,8 @@ public struct ProfileReport: Sendable, Hashable {
         dependencyResolution: [NamedDuration],
         artifactTransforms: [NamedDuration],
         projectTotals: [NamedDuration],
-        tasks: [ProfileTask]
+        tasks: [ProfileTask],
+        declaredOutcome: BuildOutcome? = nil
     ) {
         self.sourcePath = sourcePath
         self.startedAt = startedAt
@@ -134,10 +145,13 @@ public struct ProfileReport: Sendable, Hashable {
         self.artifactTransforms = artifactTransforms
         self.projectTotals = projectTotals
         self.tasks = tasks
+        self.declaredOutcome = declaredOutcome
+        self.hasStartOffsets = tasks.contains { $0.startOffset != nil }
     }
 
     public var outcome: BuildOutcome {
-        tasks.contains(where: { $0.result == .failed }) ? .failed : .succeeded
+        if let declaredOutcome { return declaredOutcome }
+        return tasks.contains(where: { $0.result == .failed }) ? .failed : .succeeded
     }
 
     public var taskCountsByResult: [TaskResult: Int] {
@@ -160,9 +174,11 @@ public struct ProfileReport: Sendable, Hashable {
 public struct BuildDetail: Sendable, Hashable {
     public let record: BuildRecord
     public let report: ProfileReport?
+    public let scan: LocalScan?
 
-    public init(record: BuildRecord, report: ProfileReport?) {
+    public init(record: BuildRecord, report: ProfileReport?, scan: LocalScan? = nil) {
         self.record = record
         self.report = report
+        self.scan = scan
     }
 }

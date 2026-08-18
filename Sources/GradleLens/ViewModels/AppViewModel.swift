@@ -23,6 +23,15 @@ final class AppViewModel {
     var errorMessage: String?
     var inspectorVisible = true
     var projectMissingFromDisk = false
+    var compareBaselineID: UUID?
+    var compareCandidateID: UUID?
+    var comparison: BuildComparison?
+    var captureStatus: CaptureInstallStatus?
+    var confirmInstallCapture = false
+    var showingTrends = false
+    var selectedCommandKey: String?
+    var trendRange = TrendRange()
+    var trendBranch: String?
 
     private var store: BuildHistoryStore?
     private let discovery: ProjectDiscoveryService
@@ -30,6 +39,8 @@ final class AppViewModel {
     private let cacheInspector: BuildCacheInspector
     private let git: GitService
     private let structureReader: ProjectStructureReader
+    private let comparator: BuildComparator
+    private let captureInstaller: CaptureScriptInstaller
     private let autoImportIDERecents: Bool
     private let defaults: UserDefaults
 
@@ -40,6 +51,8 @@ final class AppViewModel {
         cacheInspector: BuildCacheInspector = BuildCacheInspector(),
         git: GitService = GitService(),
         structureReader: ProjectStructureReader = ProjectStructureReader(),
+        comparator: BuildComparator = BuildComparator(),
+        captureInstaller: CaptureScriptInstaller = CaptureScriptInstaller(),
         autoImportIDERecents: Bool = true,
         defaults: UserDefaults = .standard
     ) {
@@ -49,6 +62,8 @@ final class AppViewModel {
         self.cacheInspector = cacheInspector
         self.git = git
         self.structureReader = structureReader
+        self.comparator = comparator
+        self.captureInstaller = captureInstaller
         self.autoImportIDERecents = autoImportIDERecents
         self.defaults = defaults
     }
@@ -94,6 +109,7 @@ final class AppViewModel {
             }
             projects = loaded
             cacheOverview = await cache
+            captureStatus = captureInstaller.status()
 
             if let last = defaults.string(forKey: Self.lastProjectKey),
                projects.contains(where: { $0.id == last })
@@ -160,6 +176,10 @@ final class AppViewModel {
         projectStructure = nil
         projectMissingFromDisk = false
         taskSearch = ""
+        selectedCommandKey = nil
+        trendBranch = nil
+        showingTrends = false
+        clearComparison()
 
         guard let id else { return }
         defaults.set(id, forKey: Self.lastProjectKey)
@@ -195,6 +215,7 @@ final class AppViewModel {
             return
         }
         selectedDetail = await indexer.loadDetail(for: record)
+        selectedCommandKey = record.commandKey
     }
 
     func refresh() async {
@@ -259,6 +280,112 @@ final class AppViewModel {
         errorMessage = nil
     }
 
+    var commandSeries: [CommandSeries] {
+        TrendAnalyzer().commands(in: builds)
+    }
+
+    var selectedCommandOrDefault: String? {
+        if let selectedCommandKey { return selectedCommandKey }
+        if let selected = selectedBuild { return selected.commandKey }
+        return commandSeries.first?.key
+    }
+
+    var trendSnapshot: TrendSnapshot? {
+        guard let key = selectedCommandOrDefault else { return nil }
+        return TrendAnalyzer().snapshot(
+            in: builds,
+            commandKey: key,
+            range: trendRange,
+            branch: trendBranch
+        )
+    }
+
+    func showTrends(for commandKey: String? = nil) {
+        showingTrends = true
+        comparison = nil
+        if let commandKey {
+            selectedCommandKey = commandKey
+        } else if selectedCommandKey == nil {
+            selectedCommandKey = selectedCommandOrDefault
+        }
+    }
+
+    func selectCommand(_ key: String?) {
+        selectedCommandKey = key
+    }
+
+    var isComparing: Bool {
+        compareBaselineID != nil && compareCandidateID != nil && comparison != nil
+    }
+
+    func markForCompare(_ id: UUID) async {
+        if compareBaselineID == nil {
+            compareBaselineID = id
+            statusMessage = "Baseline set. Choose another build to compare."
+            return
+        }
+        if compareBaselineID == id {
+            return
+        }
+        compareCandidateID = id
+        await refreshComparison()
+    }
+
+    func compareWithPrevious() async {
+        guard let current = selectedBuildID,
+              let index = filteredBuilds.firstIndex(where: { $0.id == current }),
+              filteredBuilds.indices.contains(index + 1)
+        else {
+            statusMessage = "Need an older build in this list to compare."
+            return
+        }
+        compareBaselineID = filteredBuilds[index + 1].id
+        compareCandidateID = current
+        await refreshComparison()
+    }
+
+    func swapComparison() async {
+        swap(&compareBaselineID, &compareCandidateID)
+        await refreshComparison()
+    }
+
+    func clearComparison() {
+        compareBaselineID = nil
+        compareCandidateID = nil
+        comparison = nil
+    }
+
+    func requestInstallCapture() {
+        confirmInstallCapture = true
+    }
+
+    func installCaptureScript() {
+        do {
+            try captureInstaller.install()
+            captureStatus = captureInstaller.status()
+            confirmInstallCapture = false
+            statusMessage = "Installed local capture to ~/.gradle/init.d. New Gradle builds will write scan JSON."
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func refreshComparison() async {
+        guard let baseID = compareBaselineID, let candID = compareCandidateID else {
+            comparison = nil
+            return
+        }
+        guard let baseRecord = builds.first(where: { $0.id == baseID }),
+              let candRecord = builds.first(where: { $0.id == candID })
+        else {
+            comparison = nil
+            return
+        }
+        let baseline = await indexer.loadDetail(for: baseRecord)
+        let candidate = await indexer.loadDetail(for: candRecord)
+        comparison = comparator.compare(baseline: baseline, candidate: candidate)
+    }
+
     private func indexSelectedProject() async {
         guard let project = selectedProject else { return }
         isIndexing = true
@@ -271,7 +398,7 @@ final class AppViewModel {
             )
             projectStructure = structure
             if result.imported > 0 {
-                statusMessage = "Indexed \(result.imported) new profile report\(result.imported == 1 ? "" : "s")."
+                statusMessage = "Indexed \(result.imported) new local build\(result.imported == 1 ? "" : "s")."
             }
         } catch {
             errorMessage = error.localizedDescription

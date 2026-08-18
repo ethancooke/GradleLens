@@ -75,7 +75,7 @@ jobs:
 
       - name: Build & package
         env:
-          SIGN_IDENTITY: ${{ env.SIGN_IDENTITY }}
+          SIGN_IDENTITY: ${{ env.SIGN_IDENTITY != '' && env.SIGN_IDENTITY || '-' }}
           VERSION: ${{ env.VERSION }}
           BUILD: ${{ env.BUILD }}
           NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}

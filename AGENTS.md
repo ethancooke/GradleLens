@@ -19,6 +19,7 @@ strict concurrency. SwiftUI-first. Swift Package Manager layout. No network, no 
 - Add a permission (Info.plist + entitlement, from a baked-in table): `Scripts/add-permission.sh <permission> "<reason>"` (`--list` shows slugs)
 - Format Swift (optional, not a gate): `Scripts/format.sh` (`--lint` to check only)
 - Ad-hoc release build: `bash Scripts/release.sh`
+- Install local Gradle capture init script: `Scripts/install-capture.sh`
 
 The only hard gate is the Swift 6 compiler in strict concurrency mode (`swift build`) — there is no
 lint gate. Formatting via `Scripts/format.sh` (toolchain `swift format`, config `.swift-format`) is

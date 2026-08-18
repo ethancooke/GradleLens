@@ -20,13 +20,18 @@ GradleLens is for individual developer machines and large monorepos. It reads ar
 - **Project structure** — modules and included builds from `settings.gradle` / `settings.gradle.kts`
 - **Git context** — current branch, dirty status, recent commits (local `git` only; never fetch/push)
 
-To capture richer builds, run Gradle with `--profile`:
+To capture richer builds, run Gradle with `--profile` and (optionally) the GradleLens init script:
 
 ```bash
-./gradlew --profile assemble
+Scripts/install-capture.sh          # once: copy init script to ~/.gradle/init.d
+./gradlew --profile assemble        # writes profile HTML + scan JSON
 ```
 
-Reports land in `build/reports/profile/`. GradleLens never invokes the Gradle wrapper, so it cannot trigger a distribution download.
+`--profile` reports land in `build/reports/profile/`. The init script adds `build/reports/gradlelens/scan-*.json` with real success/failure, git-at-build-time, and task start offsets. GradleLens never invokes the Gradle wrapper.
+
+Select two builds and choose **Compare** (or Compare with previous) to see duration deltas, cache flips, and tasks that appeared or disappeared.
+
+**Trends** groups the same Gradle command and charts duration and outcomes over a range you pick (24 hours through all history, or custom dates).
 
 ---
 
@@ -61,6 +66,29 @@ See [`PRIVACY.md`](PRIVACY.md).
 
 ---
 
+## Releases
+
+Local first, GitHub Actions second. Details: [`docs/RELEASING.md`](docs/RELEASING.md).
+
+```bash
+# 1. Ad-hoc .app + .dmg on this Mac (Gatekeeper-blocked elsewhere)
+bash Scripts/release.sh
+
+# 2. After a Developer ID cert + notarytool profile exist:
+SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+NOTARY_KEYCHAIN_PROFILE="gradlelens-notary" \
+bash Scripts/release.sh
+
+# 3. Then enable signing secrets on the repo and:
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+CI already drafts a GitHub release from `v*` tags. Leave `SIGNING_ENABLED` unset until local notarization works.
+
+---
+
 ## License
 
-[Apache License 2.0](LICENSE).
+[Apache License 2.0](LICENSE) — use, modify, and share freely, including in commercial products;
+include the license and NOTICE, and Apache’s patent grant applies. Contributions are under the
+same terms ([`CONTRIBUTING.md`](CONTRIBUTING.md)). Security reports: [`SECURITY.md`](SECURITY.md).

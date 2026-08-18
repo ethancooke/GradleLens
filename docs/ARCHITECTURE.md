@@ -50,16 +50,20 @@ model hops off the main actor. Stateless parsers (`ProfileReportParser`,
 | Feature | Source | Notes |
 |---|---|---|
 | Recent projects | App SQLite + Android Studio / IntelliJ `recentProjects.xml` | `$USER_HOME$` expanded locally |
-| Build history | `<project>/build/reports/profile/profile-*.html` | Gradle `--profile` HTML |
+| Build history | `<project>/build/reports/profile/profile-*.html` plus `build/reports/gradlelens/scan-*.json` | HTML is the fallback; scan JSON is preferred when both exist |
+| Build compare | Two `BuildDetail` values | Duration / phase / task deltas, cache flips, appeared/disappeared |
+| Trends | Same command key + date range over local history | Duration chart, outcome strip, median / p95 / fail rate |
 | Cache overview | `$GRADLE_USER_HOME/caches/build-cache-1` (default `~/.gradle/…`) | Metadata only; blobs are not parsed |
 | Project structure | `settings.gradle(.kts)` + module `build.gradle(.kts)` | No Tooling API / no `./gradlew` |
 | Gradle version | `gradle/wrapper/gradle-wrapper.properties` | Parsed as text; never downloaded |
 | Git | `/usr/bin/git` (`rev-parse`, `status`, `log`) | `GIT_TERMINAL_PROMPT=0`; no fetch/push |
 
-The Gradle Tooling API is a JVM library. Invoking it (or the wrapper) from v1 would
-risk downloading a distribution and is deliberately avoided. A later companion
-init script / plugin can write richer local scan files; the `BuildRecord` model
-already has optional git fields for that.
+The Gradle Tooling API is a JVM library. Invoking it (or the wrapper) is avoided
+so the app cannot trigger a distribution download. Richer capture comes from the
+optional init script at `Sources/GradleLensCore/Resources/gradlelens.init.gradle.kts`
+(`Scripts/install-capture.sh` copies it to `~/.gradle/init.d`). It writes local
+JSON only. The indexer pairs a scan with a `--profile` HTML file when their
+start times are within 30 seconds.
 
 ## Persistence
 

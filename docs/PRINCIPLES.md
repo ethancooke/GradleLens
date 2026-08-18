@@ -1,6 +1,6 @@
 # Design principles — the decision compass
 
-Guidance for anyone — human or AI — building an app on this template. When a design or
+Guidance for anyone — human or AI — working on GradleLens. When a design or
 implementation choice is ambiguous, this is how to decide. The goal is trustworthy software:
 **privacy, user control, safety, transparency, and minimal footprint come before features,
 convenience, or performance.**
@@ -27,7 +27,7 @@ When two options are otherwise close, pick the more conservative, more user-resp
 - Process user data **locally**. Nothing leaves the device without specific, informed, revocable
   consent for a stated purpose.
 - **In practice:** keep [`PRIVACY.md`](../PRIVACY.md) honest — update it the moment you add network
-  access or data collection. The template's [`Entitlements.plist`](../Resources/Entitlements.plist)
+  access or data collection. [`Entitlements.plist`](../Resources/Entitlements.plist)
   ships with no network entitlement; adding one (under App Sandbox) is a deliberate, disclosed step.
 
 ## 2. Minimal footprint
@@ -66,13 +66,13 @@ When two options are otherwise close, pick the more conservative, more user-resp
 
 ## 6. Open, auditable & secure
 
-- The template ships as open source (Apache 2.0) and assumes **auditable** behavior: no hidden
+- GradleLens ships as open source (Apache 2.0) and assumes **auditable** behavior: no hidden
   capabilities, no undisclosed data flows. If you build a closed-source app, the transparency and
   no-hidden-behavior standards still apply.
 - Keep dependencies **license-clean and privacy-respecting**, and list each one in
   [`NOTICE`](../NOTICE). Fewer dependencies = smaller attack surface.
 - **Security by design:** validate input, fail closed, prefer secure defaults, and keep the
-  hardened-runtime posture the template ships with (see [`RELEASING.md`](RELEASING.md)).
+  hardened-runtime posture the project ships with (see [`RELEASING.md`](RELEASING.md)).
 
 ## The decision rule
 

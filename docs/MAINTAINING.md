@@ -38,7 +38,7 @@ notes — skim the action's release notes before merging.
   newer image ships a newer Xcode/Swift, which can introduce new warnings or deprecations.
 - **Swift tools version & language mode** (`swift-tools-version`, `.swiftLanguageMode(.v6)` in
   `Package.swift`). Raise with new Swift majors, and when a new tools-version unlocks settings the
-  template should adopt (6.2 added `.defaultIsolation` and `.strictMemorySafety`). Watch for
+  project should adopt (6.2 added `.defaultIsolation` and `.strictMemorySafety`). Watch for
   tightened strict-concurrency diagnostics that a newer compiler may surface. The app target
   already matches Xcode 26's Approachable Concurrency defaults; don't flip those off without a
   reason.

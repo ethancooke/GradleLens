@@ -72,8 +72,7 @@ Mirror the target under `Tests/`. Use Swift Testing (`@Test`, `#expect`, `@Suite
 - **Don't hand-edit `Info.plist`/`Entitlements.plist` for permissions.** Use `add-permission.sh`.
 - **Don't put XML comments in `Entitlements.plist`.** `codesign` rejects them.
 - **Don't add network calls, telemetry, or invoke `./gradlew`.** GradleLens is offline-only
-  (PRINCIPLES §1). Persistence belongs in Application Support and must stay local.
-- **Don't add network calls, telemetry, or persistence silently.** They are opt-in and disclosed
-  (PRINCIPLES §1).
+  (PRINCIPLES §1). Persistence belongs in Application Support and must stay local. The optional
+  capture init script is user-installed and still writes only local files.
 - **Don't leave the build with warnings.** Fix deprecations as they appear.
 - **Don't add comments that restate the code.** Comment only non-obvious *why*.

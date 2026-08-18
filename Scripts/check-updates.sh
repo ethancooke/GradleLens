@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Maintenance audit for keeping the template current. Report-only — it never mutates the repo.
+# Maintenance audit for keeping GradleLens current. Report-only — it never mutates the repo.
 #
 # It complements Dependabot (which already opens PRs for GitHub Actions and SwiftPM version
 # bumps) by surfacing the things Dependabot can't see:

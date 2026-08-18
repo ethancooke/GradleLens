@@ -42,6 +42,9 @@ let package = Package(
         .target(
             name: "GradleLensCore",
             dependencies: [],
+            resources: [
+                .copy("Resources/gradlelens.init.gradle.kts")
+            ],
             swiftSettings: librarySwiftSettings,
             linkerSettings: [
                 .linkedLibrary("sqlite3")

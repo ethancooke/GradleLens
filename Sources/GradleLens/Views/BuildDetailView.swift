@@ -43,8 +43,10 @@ struct BuildDetailView: View {
                     .font(.system(size: 34, weight: .semibold, design: .rounded))
                 StatusBadge(outcome: detail.record.outcome)
                 Spacer()
-                if let url = detail.record.profileURL {
-                    Button("Open Report") { WorkspaceOpener.open(url) }
+                if let url = detail.record.scanURL ?? detail.record.profileURL {
+                    Button(detail.record.scanURL == nil ? "Open Report" : "Open Scan") {
+                        WorkspaceOpener.open(url)
+                    }
                     Button("Reveal") { WorkspaceOpener.reveal(url) }
                 }
             }
@@ -57,6 +59,9 @@ struct BuildDetailView: View {
                 }
                 if let report = detail.report {
                     labeled("Tasks", "\(report.tasks.count)")
+                }
+                if detail.scan != nil {
+                    labeled("Capture", "Local scan")
                 }
             }
             .font(.callout)

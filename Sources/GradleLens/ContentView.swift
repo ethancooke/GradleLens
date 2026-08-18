@@ -13,10 +13,21 @@ struct ContentView: View {
             ProjectSidebarView(viewModel: viewModel)
                 .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 340)
         } content: {
-            BuildListView(viewModel: viewModel)
-                .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 460)
+            if viewModel.showingTrends {
+                CommandSeriesList(viewModel: viewModel)
+                    .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 460)
+            } else {
+                BuildListView(viewModel: viewModel)
+                    .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 460)
+            }
         } detail: {
-            BuildDetailView(viewModel: viewModel)
+            if viewModel.showingTrends {
+                TrendView(viewModel: viewModel)
+            } else if viewModel.comparison != nil {
+                BuildCompareView(viewModel: viewModel)
+            } else {
+                BuildDetailView(viewModel: viewModel)
+            }
         }
         .inspector(isPresented: $viewModel.inspectorVisible) {
             ProjectInspectorView(viewModel: viewModel)
@@ -39,6 +50,20 @@ struct ContentView: View {
                 }
                 .help("Toggle git, structure, and cache inspector")
             }
+        }
+        .confirmationDialog(
+            "Install local capture?",
+            isPresented: $viewModel.confirmInstallCapture,
+            titleVisibility: .visible
+        ) {
+            Button("Install to ~/.gradle/init.d") {
+                viewModel.installCaptureScript()
+            }
+            Button("Cancel", role: .cancel) {
+                viewModel.confirmInstallCapture = false
+            }
+        } message: {
+            Text("This writes gradlelens.init.gradle.kts into your Gradle user home so future local builds emit a JSON scan under build/reports/gradlelens. Nothing is uploaded. Existing builds are not modified.")
         }
         .alert(
             "Something went wrong",
@@ -88,6 +113,9 @@ struct ContentView: View {
         }
         .task {
             await viewModel.bootstrap()
+            if let url = LaunchArguments.openFolder() {
+                await viewModel.openProject(at: url)
+            }
         }
     }
 }

@@ -52,9 +52,9 @@ There is no linter; the Swift 6 compiler in strict-concurrency mode is the gate.
 Write imperative, specific subjects that describe the effect, e.g.:
 
 ```
-Add camera entitlement + capture usage description
-Drop macOS 13 fallback now that @Observable is required
-Fix release.sh arm64 check for arm64e slices
+Index GradleLens scan JSON next to --profile reports
+Fix trend median for even-sized run lists
+Skip machine-only GradleTestData suites when the fixture is absent
 ```
 
 ## Style & conventions

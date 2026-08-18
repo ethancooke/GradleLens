@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Something in the template is broken or behaves incorrectly
+about: Something in GradleLens is broken or behaves incorrectly
 title: ""
 labels: bug
 assignees: ""
