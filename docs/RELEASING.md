@@ -30,8 +30,8 @@ fully notarized, stapled, distributable build.
   security find-identity -v -p codesigning
   # e.g. "Developer ID Application: Your Name (TEAMID)"
   ```
-- Notarization credentials — an **app-specific password** (appleid.apple.com ▸ Sign-In & Security
-  ▸ App-Specific Passwords). Store them once as a `notarytool` keychain profile:
+- Notarization credentials — an **app-specific password** ([account.apple.com](https://account.apple.com)
+  ▸ Sign-In and Security ▸ App-Specific Passwords). Store them once as a `notarytool` keychain profile:
   ```bash
   xcrun notarytool store-credentials gradlelens-notary \
     --apple-id "you@example.com" --team-id "TEAMID" --password "app-specific-password"
@@ -94,7 +94,9 @@ GitHub release with the `.dmg` / `.zip` and their checksums. Signing is **opt-in
 4. Review the draft release the workflow creates, then publish it.
 
 Without `SIGNING_ENABLED=true`, the workflow still runs and produces an **ad-hoc** `.dmg`/`.zip`
-(handy for smoke-testing the pipeline) — just not a distributable, notarized build.
+(handy for smoke-testing the pipeline) — just not a distributable, notarized build. With the
+variable on, the job fails closed if any signing or notary secret is missing, so a tag cannot
+publish an unsigned draft by accident.
 
 Do this in order:
 

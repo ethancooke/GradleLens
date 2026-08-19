@@ -51,6 +51,27 @@ jobs:
 
       # Signing is opt-in: set the repo variable SIGNING_ENABLED=true and add the secrets below.
       # Without it, the release is ad-hoc signed (not notarized) — usable but Gatekeeper-blocked.
+      - name: Require signing + notarization secrets
+        if: ${{ vars.SIGNING_ENABLED == 'true' }}
+        env:
+          CERT_B64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          CERT_PW: ${{ secrets.MACOS_CERT_PASSWORD }}
+          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "${CERT_B64}" ]] || missing+=(MACOS_CERT_P12_BASE64)
+          [[ -n "${CERT_PW}" ]] || missing+=(MACOS_CERT_PASSWORD)
+          [[ -n "${NOTARY_APPLE_ID}" ]] || missing+=(NOTARY_APPLE_ID)
+          [[ -n "${NOTARY_TEAM_ID}" ]] || missing+=(NOTARY_TEAM_ID)
+          [[ -n "${NOTARY_PASSWORD}" ]] || missing+=(NOTARY_PASSWORD)
+          if ((${#missing[@]})); then
+            echo "SIGNING_ENABLED is true but missing secrets: ${missing[*]}"
+            exit 1
+          fi
+
       - name: Import signing certificate
         if: ${{ vars.SIGNING_ENABLED == 'true' }}
         env:
@@ -78,6 +99,7 @@ jobs:
           SIGN_IDENTITY: ${{ env.SIGN_IDENTITY != '' && env.SIGN_IDENTITY || '-' }}
           VERSION: ${{ env.VERSION }}
           BUILD: ${{ env.BUILD }}
+          REQUIRE_NOTARY: ${{ vars.SIGNING_ENABLED == 'true' && '1' || '0' }}
           NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
           NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
           NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}

@@ -24,6 +24,7 @@
 #   BUILD                    Override the build number (default: Info.plist CFBundleVersion).
 #                            Stamped into the bundle as CFBundleVersion; should increase per build.
 #   SKIP_TESTS               Set to 1 to skip `swift test`.
+#   REQUIRE_NOTARY           Set to 1 to fail if the build is not Developer ID signed + notarized.
 #
 set -euo pipefail
 
@@ -165,6 +166,13 @@ ditto -c -k --keepParent "$APP" "$ZIP"
 echo
 log "Done. Artifacts in dist/:"
 ls -1 "$DIST"
+if [[ "${REQUIRE_NOTARY:-0}" == "1" && "$NOTARIZED" != "1" ]]; then
+    echo
+    echo "ERROR: REQUIRE_NOTARY=1 but the build was not notarized."
+    echo "       Set SIGN_IDENTITY to a Developer ID Application identity and provide"
+    echo "       NOTARY_KEYCHAIN_PROFILE or NOTARY_APPLE_ID + NOTARY_TEAM_ID + NOTARY_PASSWORD."
+    exit 1
+fi
 if [[ "$SIGN_IDENTITY" == "-" ]]; then
     echo
     echo "NOTE: ad-hoc signed — fine on this Mac, but Gatekeeper will block it elsewhere."
