@@ -142,6 +142,9 @@ struct CaptureScriptInstallerTests {
         #expect(status.installed)
         #expect(status.matchesBundled)
         #expect(FileManager.default.fileExists(atPath: status.path))
+        try installer.uninstall(environment: env)
+        #expect(installer.status(environment: env).installed == false)
+        #expect(!FileManager.default.fileExists(atPath: status.path))
     }
 }
 

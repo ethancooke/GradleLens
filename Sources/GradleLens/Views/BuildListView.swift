@@ -28,7 +28,7 @@ struct BuildListView: View {
                     systemImage: "chart.bar.doc.horizontal",
                     title: "No local builds yet",
                     message: """
-                    GradleLens reads --profile HTML and GradleLens scan JSON.
+                    Run a Gradle build with --profile, then Refresh.
 
                     ./gradlew --profile <tasks>
                     """

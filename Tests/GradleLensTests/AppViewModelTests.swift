@@ -13,6 +13,7 @@ struct AppViewModelTests {
         let viewModel = AppViewModel(
             store: store,
             autoImportIDERecents: false,
+            promptsForCapture: false,
             defaults: UserDefaults(suiteName: "GradleLensTests-\(UUID().uuidString)")!
         )
         await viewModel.bootstrap()
@@ -29,6 +30,7 @@ struct AppViewModelTests {
         let viewModel = AppViewModel(
             store: store,
             autoImportIDERecents: false,
+            promptsForCapture: false,
             defaults: UserDefaults(suiteName: "GradleLensTests-\(UUID().uuidString)")!
         )
         await viewModel.bootstrap()
@@ -74,6 +76,7 @@ struct AppViewModelTests {
         let viewModel = AppViewModel(
             store: store,
             autoImportIDERecents: false,
+            promptsForCapture: false,
             defaults: UserDefaults(suiteName: "GradleLensTests-\(UUID().uuidString)")!
         )
         await viewModel.bootstrap()
@@ -100,6 +103,7 @@ struct AppViewModelTests {
         let viewModel = AppViewModel(
             store: store,
             autoImportIDERecents: false,
+            promptsForCapture: false,
             defaults: UserDefaults(suiteName: "GradleLensTests-\(UUID().uuidString)")!
         )
         await viewModel.bootstrap()
@@ -139,6 +143,7 @@ struct AppViewModelTests {
         let viewModel = AppViewModel(
             store: store,
             autoImportIDERecents: false,
+            promptsForCapture: false,
             defaults: UserDefaults(suiteName: "GradleLensTests-\(UUID().uuidString)")!
         )
         await viewModel.bootstrap()
@@ -192,6 +197,7 @@ struct AppViewModelTests {
         let viewModel = AppViewModel(
             store: store,
             autoImportIDERecents: false,
+            promptsForCapture: false,
             defaults: UserDefaults(suiteName: "GradleLensTests-\(UUID().uuidString)")!
         )
         await viewModel.bootstrap()
@@ -204,6 +210,41 @@ struct AppViewModelTests {
         viewModel.trendRange.preset = .all
         #expect(viewModel.trendSnapshot?.runs.count == 2)
         #expect(viewModel.trendSnapshot?.stats.medianDuration == 31)
+    }
+
+    @Test("First launch can prompt for capture; tests can skip the prompt")
+    func capturePrompt() async throws {
+        let store = try BuildHistoryStore.inMemory()
+        let defaults = UserDefaults(suiteName: "GradleLensTests-\(UUID().uuidString)")!
+        let home = FileManager.default.temporaryDirectory
+            .appendingPathComponent("GradleLens-onboard-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: home) }
+        let installer = CaptureScriptInstaller(
+            homeDirectory: home,
+            environment: ["GRADLE_USER_HOME": home.appendingPathComponent(".gradle").path]
+        )
+        let viewModel = AppViewModel(
+            store: store,
+            captureInstaller: installer,
+            autoImportIDERecents: false,
+            promptsForCapture: true,
+            defaults: defaults
+        )
+        await viewModel.bootstrap()
+        #expect(viewModel.showCaptureOnboarding == true)
+        viewModel.dismissCaptureOnboarding()
+        #expect(viewModel.showCaptureOnboarding == false)
+
+        let again = AppViewModel(
+            store: store,
+            captureInstaller: installer,
+            autoImportIDERecents: false,
+            promptsForCapture: true,
+            defaults: defaults
+        )
+        await again.bootstrap()
+        #expect(again.showCaptureOnboarding == false)
     }
 }
 

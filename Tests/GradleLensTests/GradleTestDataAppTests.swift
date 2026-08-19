@@ -23,6 +23,7 @@ struct GradleTestDataAppTests {
         let viewModel = AppViewModel(
             store: store,
             autoImportIDERecents: false,
+            promptsForCapture: false,
             defaults: UserDefaults(suiteName: "GradleLens-GradleTestData-\(UUID().uuidString)")!
         )
         await viewModel.bootstrap()
@@ -56,6 +57,7 @@ struct GradleTestDataAppTests {
         let viewModel = AppViewModel(
             store: store,
             autoImportIDERecents: false,
+            promptsForCapture: false,
             defaults: UserDefaults(suiteName: "GradleLens-GradleTestData-\(UUID().uuidString)")!
         )
         await viewModel.bootstrap()

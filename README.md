@@ -20,14 +20,16 @@ GradleLens is for individual developer machines and large monorepos. It reads ar
 - **Project structure** — modules and included builds from `settings.gradle` / `settings.gradle.kts`
 - **Git context** — current branch, dirty status, recent commits (local `git` only; never fetch/push)
 
-To capture richer builds, run Gradle with `--profile` and (optionally) the GradleLens init script:
+Use it by generating a normal Gradle profile, then opening the project:
 
 ```bash
-Scripts/install-capture.sh          # once: copy init script to ~/.gradle/init.d
-./gradlew --profile assemble        # writes profile HTML + scan JSON
+./gradlew --profile assemble
+swift run GradleLens -- --open /path/to/project
 ```
 
-`--profile` reports land in `build/reports/profile/`. The init script adds `build/reports/gradlelens/scan-*.json` with real success/failure, git-at-build-time, and task start offsets. GradleLens never invokes the Gradle wrapper.
+No extra Gradle plugin or init script is required. Reports land in `build/reports/profile/`. GradleLens never invokes the wrapper.
+
+On first launch you can optionally turn on **richer capture** (also in Settings). That only writes extra local reports when you run Gradle; the app works the same without it.
 
 Select two builds and choose **Compare** (or Compare with previous) to see duration deltas, cache flips, and tasks that appeared or disappeared.
 

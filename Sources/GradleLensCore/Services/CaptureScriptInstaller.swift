@@ -16,21 +16,29 @@ public struct CaptureScriptInstaller: Sendable {
     public static let fileName = "gradlelens.init.gradle.kts"
 
     private let homeDirectory: URL
+    private let environment: [String: String]
 
-    public init(homeDirectory: URL = URL(fileURLWithPath: NSHomeDirectory())) {
+    public init(
+        homeDirectory: URL = URL(fileURLWithPath: NSHomeDirectory()),
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) {
         self.homeDirectory = homeDirectory
+        self.environment = environment
     }
 
     public func installURL(
-        environment: [String: String] = ProcessInfo.processInfo.environment
+        environment: [String: String]? = nil
     ) -> URL {
-        AppPaths.gradleUserHome(environment: environment, homeDirectory: homeDirectory)
+        AppPaths.gradleUserHome(
+            environment: environment ?? self.environment,
+            homeDirectory: homeDirectory
+        )
             .appendingPathComponent("init.d", isDirectory: true)
             .appendingPathComponent(Self.fileName)
     }
 
     public func status(
-        environment: [String: String] = ProcessInfo.processInfo.environment
+        environment: [String: String]? = nil
     ) -> CaptureInstallStatus {
         let url = installURL(environment: environment)
         let installed = FileManager.default.fileExists(atPath: url.path)
@@ -44,11 +52,19 @@ public struct CaptureScriptInstaller: Sendable {
     }
 
     public func install(
-        environment: [String: String] = ProcessInfo.processInfo.environment
+        environment: [String: String]? = nil
     ) throws {
         let url = installURL(environment: environment)
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try Self.bundledScript().write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    public func uninstall(
+        environment: [String: String]? = nil
+    ) throws {
+        let url = installURL(environment: environment)
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        try FileManager.default.removeItem(at: url)
     }
 
     public static func bundledScript() -> String {

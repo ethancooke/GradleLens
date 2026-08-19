@@ -106,25 +106,22 @@ struct ProjectInspectorView: View {
     }
 
     private var captureSection: some View {
-        GroupBox("Local capture") {
+        GroupBox("Richer capture") {
             VStack(alignment: .leading, spacing: 8) {
+                Toggle(
+                    "Record extra Gradle details",
+                    isOn: Binding(
+                        get: { viewModel.isRicherCaptureEnabled },
+                        set: { viewModel.setRicherCaptureEnabled($0) }
+                    )
+                )
+                Text("Optional. Improves pass/fail and task timing. Change this anytime in Settings. The app works from --profile reports without it.")
+                    .foregroundStyle(.secondary)
                 if let status = viewModel.captureStatus, status.installed {
-                    LabeledContent("Init script", value: status.matchesBundled ? "Installed" : "Installed (different version)")
                     Text(PathFormat.abbreviatingHome(status.path))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
-                    if !status.matchesBundled {
-                        Button("Update init script") {
-                            viewModel.requestInstallCapture()
-                        }
-                    }
-                } else {
-                    Text("Install an init script so Gradle writes scan JSON (outcome, git, task start times) under build/reports/gradlelens. --profile HTML still works without it.")
-                        .foregroundStyle(.secondary)
-                    Button("Install init script…") {
-                        viewModel.requestInstallCapture()
-                    }
                 }
             }
         }

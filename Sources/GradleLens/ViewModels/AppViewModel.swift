@@ -5,6 +5,7 @@ import GradleLensCore
 @Observable
 final class AppViewModel {
     private static let lastProjectKey = "GradleLens.lastProjectPath"
+    private static let capturePromptedKey = "GradleLens.capturePrompted"
 
     var projects: [GradleProject] = []
     var selectedProjectID: String?
@@ -28,6 +29,7 @@ final class AppViewModel {
     var comparison: BuildComparison?
     var captureStatus: CaptureInstallStatus?
     var confirmInstallCapture = false
+    var showCaptureOnboarding = false
     var showingTrends = false
     var selectedCommandKey: String?
     var trendRange = TrendRange()
@@ -42,6 +44,7 @@ final class AppViewModel {
     private let comparator: BuildComparator
     private let captureInstaller: CaptureScriptInstaller
     private let autoImportIDERecents: Bool
+    private let promptsForCapture: Bool
     private let defaults: UserDefaults
 
     init(
@@ -54,6 +57,7 @@ final class AppViewModel {
         comparator: BuildComparator = BuildComparator(),
         captureInstaller: CaptureScriptInstaller = CaptureScriptInstaller(),
         autoImportIDERecents: Bool = true,
+        promptsForCapture: Bool = true,
         defaults: UserDefaults = .standard
     ) {
         self.store = store
@@ -65,6 +69,7 @@ final class AppViewModel {
         self.comparator = comparator
         self.captureInstaller = captureInstaller
         self.autoImportIDERecents = autoImportIDERecents
+        self.promptsForCapture = promptsForCapture
         self.defaults = defaults
     }
 
@@ -109,7 +114,7 @@ final class AppViewModel {
             }
             projects = loaded
             cacheOverview = await cache
-            captureStatus = captureInstaller.status()
+            refreshCaptureStatus()
 
             if let last = defaults.string(forKey: Self.lastProjectKey),
                projects.contains(where: { $0.id == last })
@@ -121,6 +126,7 @@ final class AppViewModel {
         } catch {
             errorMessage = error.localizedDescription
         }
+        considerCaptureOnboarding()
     }
 
     func openProject(at url: URL) async {
@@ -355,18 +361,54 @@ final class AppViewModel {
         comparison = nil
     }
 
+    var isRicherCaptureEnabled: Bool {
+        captureStatus?.installed == true
+    }
+
     func requestInstallCapture() {
         confirmInstallCapture = true
     }
 
     func installCaptureScript() {
+        setRicherCaptureEnabled(true)
+    }
+
+    func setRicherCaptureEnabled(_ enabled: Bool) {
         do {
-            try captureInstaller.install()
-            captureStatus = captureInstaller.status()
+            if enabled {
+                try captureInstaller.install()
+            } else {
+                try captureInstaller.uninstall()
+            }
+            refreshCaptureStatus()
+            defaults.set(true, forKey: Self.capturePromptedKey)
+            showCaptureOnboarding = false
             confirmInstallCapture = false
-            statusMessage = "Installed local capture to ~/.gradle/init.d. New Gradle builds will write scan JSON."
+            statusMessage = enabled
+                ? "Richer capture is on. Future Gradle builds on this Mac will write extra local reports."
+                : "Richer capture is off. The helper was removed from ~/.gradle/init.d."
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    func dismissCaptureOnboarding() {
+        defaults.set(true, forKey: Self.capturePromptedKey)
+        showCaptureOnboarding = false
+    }
+
+    func refreshCaptureStatus() {
+        captureStatus = captureInstaller.status()
+    }
+
+    private func considerCaptureOnboarding() {
+        guard promptsForCapture else { return }
+        if captureStatus?.installed == true {
+            defaults.set(true, forKey: Self.capturePromptedKey)
+            return
+        }
+        if !defaults.bool(forKey: Self.capturePromptedKey) {
+            showCaptureOnboarding = true
         }
     }
 

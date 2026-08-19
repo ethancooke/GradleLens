@@ -33,7 +33,7 @@ xed .
 2. **Open** a project root (a folder with `settings.gradle(.kts)` or
    `build.gradle(.kts)`), or **Scan** a parent folder.
 3. Select a project. GradleLens indexes `build/reports/profile/profile-*.html`
-   and `build/reports/gradlelens/scan-*.json` into the local SQLite history.
+   (and, if present, optional scan files) into the local SQLite history.
 4. Select a build to see phases, a slowest-task timeline, and the task table.
 5. Select a build and choose **Compare** (or the context menu) to diff two local builds.
 6. Choose **Trends** to chart one command over 24 hours, 7/30/90 days, a year, all history, or a custom range.
@@ -42,12 +42,12 @@ xed .
 If a project has no profile reports yet:
 
 ```bash
-Scripts/install-capture.sh    # optional, once — richer local scan JSON
 cd /path/to/project
 ./gradlew --profile <tasks>
 ```
 
-Then click **Refresh** in GradleLens (⌘R).
+Then click **Refresh** in GradleLens (⌘R). That is enough. An optional capture script can
+improve failure detection later; you do not need it to use the app.
 
 History is stored at `~/Library/Application Support/GradleLens/history.sqlite`.
 Removing a project from the sidebar deletes only the index entry, not the project

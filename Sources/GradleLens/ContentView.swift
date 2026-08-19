@@ -51,19 +51,22 @@ struct ContentView: View {
                 .help("Toggle git, structure, and cache inspector")
             }
         }
+        .sheet(isPresented: $viewModel.showCaptureOnboarding) {
+            CaptureOnboardingView(viewModel: viewModel)
+        }
         .confirmationDialog(
-            "Install local capture?",
+            "Turn on richer capture?",
             isPresented: $viewModel.confirmInstallCapture,
             titleVisibility: .visible
         ) {
-            Button("Install to ~/.gradle/init.d") {
-                viewModel.installCaptureScript()
+            Button("Turn on") {
+                viewModel.setRicherCaptureEnabled(true)
             }
             Button("Cancel", role: .cancel) {
                 viewModel.confirmInstallCapture = false
             }
         } message: {
-            Text("This writes gradlelens.init.gradle.kts into your Gradle user home so future local builds emit a JSON scan under build/reports/gradlelens. Nothing is uploaded. Existing builds are not modified.")
+            Text("Optional. Places a small helper in ~/.gradle/init.d so future Gradle builds on this Mac record extra pass/fail and timing on disk. Nothing is uploaded. You can turn this off in Settings.")
         }
         .alert(
             "Something went wrong",

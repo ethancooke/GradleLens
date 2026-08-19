@@ -3,10 +3,11 @@ import SwiftUI
 @main
 struct GradleLensApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @State private var viewModel = AppViewModel()
 
     var body: some Scene {
         WindowGroup("GradleLens") {
-            ContentView()
+            ContentView(viewModel: viewModel)
         }
         .defaultSize(width: 1280, height: 820)
         .windowResizability(.contentMinSize)
@@ -28,6 +29,10 @@ struct GradleLensApp: App {
                 }
                 .keyboardShortcut("r", modifiers: [.command])
             }
+        }
+
+        Settings {
+            CaptureSettingsView(viewModel: viewModel)
         }
     }
 }
