@@ -97,10 +97,11 @@ else
     echo "NOTE: $ICON not found — the bundle will have no app icon."
 fi
 
-# Copy any SwiftPM resource bundles into the .app. When a target declares resources
-# (.process/.copy in Package.swift), `swift build` emits "<Package>_<Target>.bundle" next to
-# the binary; code reaches them via Bundle.module, which resolves them inside Contents/Resources.
-# Without this, a release build silently ships without its resources.
+# Copy SwiftPM resource bundles into Contents/Resources.
+# Do NOT place them at the .app root — codesign rejects unsealed root contents.
+# SwiftPM's generated Bundle.module looks at Bundle.main.bundleURL/<Package>_<Target>.bundle
+# (the .app root) and fatalErrors on a miss, so production code must not use Bundle.module.
+# Drop the capture script as a loose Resources file for Bundle.main.url(forResource:).
 shopt -s nullglob
 BUNDLES=("$BIN_DIR"/*.bundle)
 shopt -u nullglob
@@ -108,9 +109,14 @@ if (( ${#BUNDLES[@]} )); then
     log "Copying ${#BUNDLES[@]} resource bundle(s) into the app"
     for b in "${BUNDLES[@]}"; do
         cp -R "$b" "$APP/Contents/Resources/"
+        if [[ -f "$b/gradlelens.init.gradle.kts" ]]; then
+            cp "$b/gradlelens.init.gradle.kts" "$APP/Contents/Resources/"
+        fi
     done
-    # NOTE: SwiftPM resource bundles normally contain only assets, so the app's signature covers
-    # them. A bundle that contains executable code must be code-signed separately, before the app.
+fi
+if [[ ! -f "$APP/Contents/Resources/gradlelens.init.gradle.kts" ]]; then
+    echo "ERROR: capture script missing from $APP/Contents/Resources"
+    exit 1
 fi
 
 xattr -cr "$APP"

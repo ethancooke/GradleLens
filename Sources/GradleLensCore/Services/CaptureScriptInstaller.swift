@@ -68,20 +68,65 @@ public struct CaptureScriptInstaller: Sendable {
     }
 
     public static func bundledScript() -> String {
-        if let url = Bundle.module.url(forResource: "gradlelens.init", withExtension: "gradle.kts"),
-           let text = try? String(contentsOf: url, encoding: .utf8)
-        {
-            return text
-        }
-        if let url = Bundle.module.url(forResource: "gradlelens.init", withExtension: "gradle.kts", subdirectory: "Resources"),
-           let text = try? String(contentsOf: url, encoding: .utf8)
-        {
+        // Never use Bundle.module. SwiftPM's generated accessor looks for
+        // `<app>.app/GradleLens_GradleLensCore.bundle` and fatalErrors if that
+        // path is missing — which is what a Contents/Resources layout does.
+        if let text = script(fromCandidates: candidateScriptURLs()) {
             return text
         }
         return embeddedFallback
     }
 
-    // Used only if the SPM resource is missing (should not happen in a normal build).
+    static func script(fromCandidates urls: [URL]) -> String? {
+        for url in urls {
+            if let text = try? String(contentsOf: url, encoding: .utf8), looksLikeCaptureScript(text) {
+                return text
+            }
+        }
+        return nil
+    }
+
+    static func candidateScriptURLs(main: Bundle = .main, sourceFilePath: String = #filePath) -> [URL] {
+        let fileName = Self.fileName
+        let bundleDir = "GradleLens_GradleLensCore.bundle"
+        var urls: [URL] = []
+
+        if let resource = main.url(forResource: "gradlelens.init", withExtension: "gradle.kts") {
+            urls.append(resource)
+        }
+        if let resourceURL = main.resourceURL {
+            urls.append(resourceURL.appendingPathComponent(fileName))
+            urls.append(resourceURL.appendingPathComponent(bundleDir).appendingPathComponent(fileName))
+        }
+        urls.append(main.bundleURL.appendingPathComponent(bundleDir).appendingPathComponent(fileName))
+        urls.append(
+            main.bundleURL
+                .appendingPathComponent("Contents/Resources/\(fileName)")
+        )
+        urls.append(
+            main.bundleURL
+                .appendingPathComponent("Contents/Resources/\(bundleDir)/\(fileName)")
+        )
+        if let executableDirectory = main.executableURL?.deletingLastPathComponent() {
+            urls.append(executableDirectory.appendingPathComponent(bundleDir).appendingPathComponent(fileName))
+            urls.append(executableDirectory.appendingPathComponent(fileName))
+        }
+
+        urls.append(
+            URL(fileURLWithPath: sourceFilePath)
+                .deletingLastPathComponent()
+                .deletingLastPathComponent()
+                .appendingPathComponent("Resources", isDirectory: true)
+                .appendingPathComponent(fileName)
+        )
+        return urls
+    }
+
+    static func looksLikeCaptureScript(_ text: String) -> Bool {
+        text.contains("GradleLensCollector") && text.contains("build/reports/gradlelens")
+    }
+
+    // Used only if no copy of the script is next to the binary or in the source tree.
     private static let embeddedFallback = """
         // GradleLens capture script missing from the application bundle.
         // Reinstall the app, or copy Sources/GradleLensCore/Resources/gradlelens.init.gradle.kts

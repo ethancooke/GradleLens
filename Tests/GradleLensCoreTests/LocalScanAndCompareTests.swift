@@ -125,6 +125,21 @@ struct CaptureScriptInstallerTests {
         #expect(script.contains("GradleLensCollector"))
         #expect(script.contains("build/reports/gradlelens"))
         #expect(script.contains("schemaVersion"))
+        #expect(!script.contains("missing from the application bundle"))
+    }
+
+    @Test("Loads a script from an app-style Resources path without Bundle.module")
+    func loadsFromAppResourcesLayout() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("GradleLens-app-\(UUID().uuidString)", isDirectory: true)
+        let resources = root.appendingPathComponent("Fake.app/Contents/Resources", isDirectory: true)
+        try FileManager.default.createDirectory(at: resources, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let dest = resources.appendingPathComponent(CaptureScriptInstaller.fileName)
+        try CaptureScriptInstaller.bundledScript().write(to: dest, atomically: true, encoding: .utf8)
+        let loaded = CaptureScriptInstaller.script(fromCandidates: [dest])
+        #expect(loaded == CaptureScriptInstaller.bundledScript())
     }
 
     @Test("Installs into a fake Gradle user home")
