@@ -1,8 +1,18 @@
 # Getting started
 
-A fast walkthrough for building and running **GradleLens**.
+A fast walkthrough for **GradleLens**.
 
-## Requirements
+## Install the app
+
+Requires an **Apple Silicon** Mac running **macOS 14** or later.
+
+1. Download the latest `.dmg` from [Releases](https://github.com/ethancooke/GradleLens/releases).
+2. Drag GradleLens to Applications and launch it.
+3. **Open** a Gradle project, or **Scan** a parent folder. First launch can import Android Studio / IntelliJ recent projects.
+
+Then skip to [Use it](#2-use-it). Building from source is only needed if you want to change the app.
+
+## Requirements (from source)
 
 - **Apple Silicon** Mac (arm64).
 - **macOS 14 Sonoma+**.
@@ -37,7 +47,7 @@ xed .
 4. Select a build to see phases, a slowest-task timeline, and the task table.
 5. Select a build and choose **Compare** (or the context menu) to diff two local builds.
 6. Choose **Trends** to chart one command over 24 hours, 7/30/90 days, a year, all history, or a custom range.
-7. The inspector shows git status, modules, the local build cache, and capture-script install.
+7. The inspector shows git status, modules, the local build cache, and whether richer capture is on.
 
 If a project has no profile reports yet:
 

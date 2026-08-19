@@ -29,9 +29,10 @@ index entry, not the project on disk.
 
 The last-selected project path is stored in `UserDefaults` on this Mac.
 
-If you choose **Install init script**, GradleLens copies `gradlelens.init.gradle.kts` into
-`~/.gradle/init.d/`. That script only writes local JSON under each project’s
-`build/reports/gradlelens/` when you run Gradle yourself. You can delete the file to uninstall it.
+If you turn on **richer capture** (first-launch prompt or Settings), GradleLens copies
+`gradlelens.init.gradle.kts` into `~/.gradle/init.d/`. That script only writes local JSON
+under each project’s `build/reports/gradlelens/` when you run Gradle yourself. Turning the
+setting off removes the file. You can also delete it by hand.
 
 ## What the app does not do
 

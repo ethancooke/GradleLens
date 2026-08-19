@@ -5,4 +5,4 @@ contact_links:
     about: Report security issues privately via GitHub's vulnerability reporting, not a public issue. See SECURITY.md.
   - name: Documentation
     url: https://github.com/ethancooke/GradleLens#readme
-    about: The README and docs/ cover the structure, build, and release pipeline.
+    about: The README and docs/ cover install, usage, and the release pipeline.

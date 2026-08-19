@@ -60,6 +60,9 @@ AuthKey_*.p8
 # --- Claude Code: commit shared .claude/settings.json; ignore personal overrides ---
 .claude/settings.local.json
 
+# --- Local agent workspace (never commit) ---
+.grok/
+
 # --- Logs ---
 *.log
 logs/
